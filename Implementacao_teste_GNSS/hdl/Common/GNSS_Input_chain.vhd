@@ -48,7 +48,7 @@ entity GNSS_Input_Chain is
         sample_valid : in std_logic;
 
         -- Runtime frequency correction of the Libero DDS.
-        DDS_FREQUENCY_OFFSET    : in std_logic_vector(4 downto 0);
+        DDS_FREQUENCY_OFFSET    : in std_logic_vector(DDS_WIDTH-1 downto 0);
         DDS_FREQUENCY_PN : in std_logic;
 
         -- Registered complex baseband sample for the following block.
@@ -64,7 +64,7 @@ architecture architecture_Input_chain of GNSS_Input_Chain is
     -----------------------------------------------------------------------------
     -- Libero IP and project component declarations
     -----------------------------------------------------------------------------
-    component DDS_PNFreq is
+    component DDS_PNFreq
     -- Port list
     generic
     (
@@ -84,15 +84,40 @@ architecture architecture_Input_chain of GNSS_Input_Chain is
     );
     end component;
 
-    component Multiplier_simplified is
-        generic (
-            data_width : integer := DDS_WIDTH
-        );
-        port (
-            A : in  std_logic_vector(data_width-1 downto 0);
-            B : in  std_logic_vector(1 downto 0);
-            S : out std_logic_vector(data_width downto 0)
-        );
+    component GNSS_Input
+    generic(
+        DDS_Width   : integer := 5;
+        OUT_Width   : integer := 8
+    );
+    port (
+        --<port_name> : <direction> <type>;
+        MAX_INPUT_I : IN  std_logic_vector(1 downto 0); -- MAX INPUT IN PHASE SIGNAL
+        MAX_INPUT_Q : IN  std_logic_vector(1 downto 0); -- MAX INPUT QUADRATURE SIGNAL
+        cos_signal  : IN  std_logic_vector(DDS_Width-1 downto 0); -- MAX INPUT IN PHASE SIGNAL
+        sin_signal  : IN  std_logic_vector(DDS_Width-1 downto 0); -- MAX INPUT QUADRATURE SIGNAL
+        OUT_I       : OUT  std_logic_vector(OUT_Width-1 downto 0); -- OUTPUT REAL PART
+        OUT_Q       : OUT  std_logic_vector(OUT_Width-1 downto 0) -- OUTPUT IMAG PART
+    );
+    end component;
+    
+    component shift_reg
+    generic(
+        data_width : integer := 64
+    );
+    port(
+        -- 	Bit Inputs
+        en:	in std_logic;
+        clk:	in std_logic;
+        rst:	in std_logic;
+        serial:	in std_logic;
+        shift:	in std_logic;
+
+        -- 	Bit_Vector Inputs
+        I:	in std_logic_vector(data_width-1 downto 0);
+
+        --	Bit_Vector Outputs
+        O:	out std_logic_vector(data_width-1 downto 0)
+    );
     end component;
 
     -----------------------------------------------------------------------------
@@ -109,8 +134,9 @@ architecture architecture_Input_chain of GNSS_Input_Chain is
     signal Q_DDS_prod : DDS_product;
     
     -----------------------------------------------------------------------------
-    type MIXED_OUT is array (0 to 1) of signed(DDS_WIDTH+1 downto 0);
+    type MIXED_OUT is array (0 to 1) of std_logic_vector(DDS_WIDTH+1 downto 0);
     signal mixed_output : MIXED_OUT;
+    signal output_reg   : MIXED_OUT;
     -- signal mixed_i_comb : signed(DDS_WIDTH+1 downto 0);
     -- signal mixed_q_comb : signed(DDS_WIDTH+1 downto 0);
 
@@ -140,27 +166,38 @@ begin
     -----------------------------------------------------------------------------
     -- Four real products used to form one complex multiplication
     -----------------------------------------------------------------------------
-    MAX_IQ(0) <= MAX_INPUT_I;
-    MAX_IQ(1) <= MAX_INPUT_Q;
-
-    ADPT_INPUT: 
-    for i in 0 to 1 generate
-        U_I_MULTIPLIER : Multiplier_simplified
-            generic map (data_width => DDS_WIDTH)
-            port map (
-                A => DDS_out(i),
-                B => MAX_IQ(0),
-                S => I_DDS_prod(i)
+    DOPPLER_COMP: GNSS_Input 
+        generic map (DDS_Width => DDS_WIDTH, OUT_Width => DDS_WIDTH + 1)
+        port map(
+            MAX_INPUT_I => MAX_INPUT_I,
+            MAX_INPUT_Q => MAX_INPUT_Q,
+            cos_signal  => DDS_out(0),
+            sin_signal  => DDS_out(1),
+            OUT_I       => mixed_output(0),
+            OUT_Q       => mixed_output(1)
             );
+            
+    -- MAX_IQ(0) <= MAX_INPUT_I;
+    -- MAX_IQ(1) <= MAX_INPUT_Q;
 
-        U_Q_MULTIPLIER : Multiplier_simplified
-            generic map (data_width => DDS_WIDTH)
-            port map (
-                A => DDS_out(i),
-                B => MAX_IQ(1),
-                S => Q_DDS_prod(i)
-            );
-    end generate;
+    -- ADPT_INPUT: 
+    -- for i in 0 to 1 generate
+    --     U_I_MULTIPLIER : Multiplier_simplified
+    --         generic map (data_width => DDS_WIDTH)
+    --         port map (
+    --             A => DDS_out(i),
+    --             B => MAX_IQ(0),
+    --             S => I_DDS_prod(i)
+    --         );
+
+    --     U_Q_MULTIPLIER : Multiplier_simplified
+    --         generic map (data_width => DDS_WIDTH)
+    --         port map (
+    --             A => DDS_out(i),
+    --             B => MAX_IQ(1),
+    --             S => Q_DDS_prod(i)
+    --        );
+    -- end generate;
 
     -- U_I_COS_MULTIPLIER : Multiplier_simplified
     --    generic map (data_width => DDS_WIDTH)
@@ -183,11 +220,11 @@ begin
     --
     -- Products are explicitly sign-extended before the sum/subtraction. 
     -----------------------------------------------------------------------------
-    mixed_output(0) <=  resize(signed(I_DDS_prod(0)), mixed_output(0)'length) -
-                        resize(signed(Q_DDS_prod(1)), mixed_output(0)'length);
+    -- mixed_output(0) <=  resize(signed(I_DDS_prod(0)), mixed_output(0)'length) -
+    --                     resize(signed(Q_DDS_prod(1)), mixed_output(0)'length);
 
-    mixed_output(1) <=  resize(signed(Q_DDS_prod(0)), mixed_output(1)'length) +
-                        resize(signed(I_DDS_prod(1)), mixed_output(1)'length);
+    -- mixed_output(1) <=  resize(signed(Q_DDS_prod(0)), mixed_output(1)'length) +
+    --                     resize(signed(I_DDS_prod(1)), mixed_output(1)'length);
 
     -----------------------------------------------------------------------------
     -- Output register
@@ -195,22 +232,42 @@ begin
     -- OUTPUT_VALID is delayed by exactly one clock with respect to sample_valid.
     -- When sample_valid is low, the last output value is held.
     -----------------------------------------------------------------------------
-    process (clk)
-    begin
-        if clk'event and clk = '1' then
-            if rst = '1' then
-                OUTPUT_I     <= (others => '0');
-                OUTPUT_Q     <= (others => '0');
-                OUTPUT_VALID <= '0';
-            else
-                OUTPUT_VALID <= sample_valid;
-
-                if sample_valid = '1' then
-                    OUTPUT_I <= std_logic_vector(mixed_output(0));
-                    OUTPUT_Q <= std_logic_vector(mixed_output(1));
-                end if;
-            end if;
-        end if;
-    end process;
+    
+    OUT_REG: for i in 0 to 1 generate
+        REG_A: shift_reg
+            generic map (data_width => DDS_WIDTH + 1)
+            port map (
+                en      => sample_valid,
+                clk     => clk,
+                rst     => rst,
+                serial  => '0',
+                shift   => '0',
+                I       => mixed_output(i),
+                O       => output_reg(i)
+            );
+    end generate;
+    
+    OUTPUT_I <= output_reg(0);
+    OUTPUT_Q <= output_reg(1);
+    
+    --process (clk)
+    --begin
+        --if clk'event and clk = '1' then
+            --if rst = '1' then
+                --OUTPUT_I     <= (others => '0');
+                --OUTPUT_Q     <= (others => '0');
+                --OUTPUT_VALID <= '0';
+            --else
+                --OUTPUT_VALID <= sample_valid;
+--
+                --if sample_valid = '1' then
+                    --OUTPUT_I <= std_logic_vector(mixed_output(0));
+                    --OUTPUT_Q <= std_logic_vector(mixed_output(1));
+                --end if;
+            --end if;
+        --end if;
+    --end process;
+    
+    
     
 end architecture_Input_chain;

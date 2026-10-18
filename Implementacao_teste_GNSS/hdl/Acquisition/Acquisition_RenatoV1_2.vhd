@@ -45,7 +45,7 @@ architecture architecture_AcquisitionV1_2 of AcquisitionV1_2 is
     constant IFFT_Width         : integer := 16; -- Datawidth before the ifft
     
     -- slower clk
-    signal clk_div2, slw_clk : std_logic;
+    signal slw_clk : std_logic;
     --signal slw_clk_2 : std_logic;
     signal doppler_dir  : std_logic;
     signal NRST, MULT_RST, MULT_RST_IN, count_bit_d1, count_bit_d2, ca_rst_pulse  : std_logic;
