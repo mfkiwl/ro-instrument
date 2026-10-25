@@ -23,8 +23,7 @@ use IEEE.numeric_std.all;
 
 entity FFT_Correlator is
 generic(
-    INPUT_WIDTH : positive := 8;
-    FFT_TYPE    : positive := 0
+    INPUT_WIDTH : positive := 8
 );
 port (
     -- digital inputs
@@ -41,6 +40,7 @@ port (
     
     -- digital outputs
     in_buf_ready    : OUT std_logic;
+    out_fft_valid   : OUT std_logic;
     out_valid       : OUT std_logic;
     out_ready       : OUT std_logic;
     
@@ -49,6 +49,7 @@ port (
     Q_OUT           : OUT std_logic_vector(2*INPUT_WIDTH-1 downto 0)
 );
 end FFT_Correlator;
+
 architecture architecture_FFT_Correlator of FFT_Correlator is
    -- signal, component etc. declarations
 	
@@ -221,12 +222,13 @@ begin
 	);
     
     -- Control signals
-    Read_data <= InReady(0) and InReady(1) and in_valid;
+    Read_data       <= InReady(0) and InReady(1) and in_valid;
+    MULT_RST        <= NGRST and ((OutReady(0) and OutReady(1)) or clkd(3) or clkd(1));
     
-    MULT_RST <= NGRST and ((OutReady(0) and OutReady(1)) or clkd(3) or clkd(1));
+    ReadPulse(0)    <= OutReady(0) and OutReady(1) and InReady(2);
+    ReadPulse(1)    <= OutReady(2) and READ_OUT;
     
-    ReadPulse(0) <= OutReady(0) and OutReady(1) and InReady(2);
-    ReadPulse(1) <= OutReady(2) and READ_OUT;
-    out_ready    <= OutReady(2);
-   
+    in_buf_ready    <= InReady(0) and InReady(1);
+    out_fft_valid   <= OutReady(0);
+    out_ready       <= OutReady(2);
 end architecture_FFT_Correlator;
