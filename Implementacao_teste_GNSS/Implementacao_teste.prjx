@@ -33,7 +33,7 @@ KEY VendorTechnology_VCCI_2.5_VOLTR "EXT"
 KEY VendorTechnology_VCCI_3.3_VOLTR "EXT"
 KEY VendorTechnology_VOLTR "EXT"
 KEY ProjectLocation "C:\Users\renat\OneDrive\Documentos\ro-instrument\Implementacao_teste_GNSS"
-KEY ProjectDescription ""
+KEY ProjectDescription "Project implementation of the RO instrument. This is a placeholder to test simulation"
 KEY UseRootLocationForLinkedFiles "TRUE"
 KEY RootLocationENVForLinkedFiles "Link_SDC"
 KEY RootLocationForLinkedFiles "C:\Users\renat\OneDrive\Documentos\ro-instrument\Implementacao_teste_GNSS\hdl"
@@ -705,8 +705,8 @@ ENDFILE
 VALUE "C:\Users\renat\OneDrive\Documentos\ro-instrument\Implementacao_teste_GNSS\hdl\Common\DDS_PNFreq.vhd,hdl"
 LINKFILEROOT "C:/Users/renat/OneDrive/Documentos/ro-instrument/Implementacao_teste_GNSS/hdl/Common"
 STATE="utd"
-TIME="1787226082"
-SIZE="2924"
+TIME="1789655427"
+SIZE="3130"
 ENDFILE
 VALUE "C:\Users\renat\OneDrive\Documentos\ro-instrument\Implementacao_teste_GNSS\hdl\Common\Divider_Signed.v,hdl"
 LINKFILEROOT "C:/Users/renat/OneDrive/Documentos/ro-instrument/Implementacao_teste_GNSS/hdl/Common"
@@ -717,8 +717,8 @@ ENDFILE
 VALUE "C:\Users\renat\OneDrive\Documentos\ro-instrument\Implementacao_teste_GNSS\hdl\Common\GNSS_Input_chain.vhd,hdl"
 LINKFILEROOT "C:/Users/renat/OneDrive/Documentos/ro-instrument/Implementacao_teste_GNSS/hdl/Common"
 STATE="utd"
-TIME="1787834560"
-SIZE="8292"
+TIME="1791380406"
+SIZE="10535"
 ENDFILE
 VALUE "C:\Users\renat\OneDrive\Documentos\ro-instrument\Implementacao_teste_GNSS\hdl\Common\SR_Flip_Flop.vhd,hdl"
 LINKFILEROOT "C:/Users/renat/OneDrive/Documentos/ro-instrument/Implementacao_teste_GNSS/hdl/Common"
@@ -1214,7 +1214,7 @@ NAME="ModelSim ME Pro"
 FUNCTION="Simulation"
 TOOL="ModelSim Pro Edition"
 LOCATION="C:\Microchip\Libero_SoC_2025.1\Libero_SoC\ModelSim_Pro\win32acoem\modelsim.exe"
-PARAM=" -l FFT_presynth_simulation.log "
+PARAM=""
 BATCH=0
 LICENSE=""
 IS32BIT="1"
@@ -1592,10 +1592,6 @@ SUBBLOCK "DDS_PNFreq::work","hdl\Common\DDS_PNFreq.vhd","FALSE","FALSE"
 ENDLIST
 LIST "Divider_Signed::work","hdl\Common\Divider_Signed.v","FALSE","FALSE"
 ENDLIST
-LIST "GNSS_Input_Chain::work","hdl\Common\GNSS_Input_chain.vhd","FALSE","FALSE"
-SUBBLOCK "DDS_PNFreq::work","hdl\Common\DDS_PNFreq.vhd","FALSE","FALSE"
-SUBBLOCK "Multiplier_simplified::work","hdl\Multiplier_simplified.vhd","FALSE","FALSE"
-ENDLIST
 LIST "LFSR_generator::work","hdl\LFSR_generator.vhd","FALSE","FALSE"
 ENDLIST
 LIST "Multiplier_simplified::work","hdl\Multiplier_simplified.vhd","FALSE","FALSE"
@@ -1603,14 +1599,18 @@ SUBBLOCK "Negative_Integer::work","hdl\Negative_Integer.vhd","FALSE","FALSE"
 ENDLIST
 LIST "Negative_Integer::work","hdl\Negative_Integer.vhd","FALSE","FALSE"
 ENDLIST
-LIST "Multiplier_simplified::work","hdl\Multiplier_simplified.vhd","FALSE","FALSE"
-SUBBLOCK "Negative_Integer::work","hdl\Negative_Integer.vhd","FALSE","FALSE"
-ENDLIST
 LIST "Negative_Integer::work","hdl\Negative_Integer.vhd","FALSE","FALSE"
 ENDLIST
 LIST "Negative_Integer::work","hdl\Negative_Integer.vhd","FALSE","FALSE"
 ENDLIST
 LIST "Flip_Flop_D::work","","FALSE","FALSE"
+ENDLIST
+LIST "GNSS_Input::work","","FALSE","FALSE"
+ENDLIST
+LIST "GNSS_Input_Chain::work","hdl\Common\GNSS_Input_chain.vhd","FALSE","FALSE"
+SUBBLOCK "DDS_PNFreq::work","hdl\Common\DDS_PNFreq.vhd","FALSE","FALSE"
+SUBBLOCK "GNSS_Input::work","","FALSE","FALSE"
+SUBBLOCK "shift_reg::work","","FALSE","FALSE"
 ENDLIST
 LIST "GNSS_Input_Chain_tb::work","stimulus\Common\Channel_input_tb.vhd","FALSE","FALSE"
 SUBBLOCK "GNSS_Input_Chain::work","hdl\Common\GNSS_Input_chain.vhd","FALSE","FALSE"
@@ -1625,6 +1625,8 @@ ENDLIST
 LIST "PF_CLK_DIV_C5::work","","FALSE","FALSE"
 ENDLIST
 LIST "round_SAT::work","component\Microsemi\SolutionCore\complex_multiplier\1.0.27\obfuscate\round_sat.vhd","FALSE","FALSE"
+ENDLIST
+LIST "shift_reg::work","","FALSE","FALSE"
 ENDLIST
 LIST "SR_Flip_Flop::work","hdl\Common\SR_Flip_Flop.vhd","FALSE","FALSE"
 ENDLIST

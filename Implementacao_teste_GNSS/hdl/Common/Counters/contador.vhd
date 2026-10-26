@@ -13,7 +13,8 @@ entity contador is
 generic(
 	data_width : integer := 6
 );
-port(	clk: 	in std_logic;
+port(	
+    clk: 	in std_logic;
 	init:	in std_logic;
 	count:	out std_logic_vector(data_width-1 downto 0)
 );
